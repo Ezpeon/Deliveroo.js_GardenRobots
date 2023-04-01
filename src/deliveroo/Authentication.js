@@ -92,19 +92,12 @@ class Authentication {
             try {
 
                 // Verify and decode payload
-                const decoded = jwt.verify( token, SUPER_SECRET );
-                if ( decoded.id && decoded.name ) {
-                    id = decoded.id
-                    name = decoded.name
-                    console.log( `Socket ${socket.id} connected as ${name}(${id}). With token: ...${token.slice(-30)}` );
-                }
-                else {
-                    throw `Socket ${socket.id} log in failure. Token is verified but id or name are missing.`
-                }
+                var {id, name} = jwt.verify( token, SUPER_SECRET );
+                console.log( `Socket ${socket.id} connected as ${name}(${id}). With token: ...${token.slice(-30)}` );
                 
             } catch(err) {
 
-                console.log( `Socket ${socket.id} log in failure. Invalid token provided.` );
+                console.log( `Socket ${socket.id} log in failure. Invalid token provided` );
                 socket.disconnect();
                 return; // invalid token
 

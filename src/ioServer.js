@@ -84,14 +84,14 @@ io.on('connection', (socket) => {
         } catch (error) { console.error(direction, 'is not a method of agent'); console.error(error) }
     });
 
-    socket.on('pickup', async (acknowledgementCallback) => {
-        const picked = me.pickUp()
+    socket.on('interact', async (acknowledgementCallback) => {
+        const picked = me.interact()
         if ( acknowledgementCallback )
             try {
-                acknowledgementCallback( me.pickUp() )
+                acknowledgementCallback( me.interact() )
             } catch (error) { console.error(error) }
     });
-
+    //-----------------------------------------------------------remove-------------------------------------------------------------
     socket.on('putdown', async (selected, acknowledgementCallback) => {
         try {
             const dropped = me.putDown( selected )

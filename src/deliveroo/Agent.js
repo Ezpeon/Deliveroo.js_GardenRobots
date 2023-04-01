@@ -4,13 +4,14 @@ const Grid =  require('./Grid')
 const Tile =  require('./Tile');
 const Parcel =  require('./Parcel');
 const config =  require('../../config');
-const Postponer = require('./Postponer');
 
 
 
 const MOVEMENT_DURATION = process.env.MOVEMENT_DURATION || config.MOVEMENT_DURATION || 500;
 const AGENTS_OBSERVATION_DISTANCE = process.env.AGENTS_OBSERVATION_DISTANCE || config.AGENTS_OBSERVATION_DISTANCE || 5;
 const PARCELS_OBSERVATION_DISTANCE = process.env.PARCELS_OBSERVATION_DISTANCE || config.PARCELS_OBSERVATION_DISTANCE || 5;
+const MAX_GROWTH_TIME_SECONDS = config.MAX_GROWTH_TIME_SECONDS || 200;
+const MAX_WATER_LEVEL_PLANT = config.MAX_WATER_LEVEL_PLANT || 120;
 
 
 /**
@@ -30,9 +31,9 @@ class Agent extends Xy {
     name;
     /** @type {Set<Agent>} sensing agents in the sensed area */
     sensing;
-    /** @type {Number} score */
+    /** @type {Number} score *///--------------------------------------------static?---------------------------------------------
     score = 0;
-    /** @type {Set<Parcel>} #carryingParcels */
+    /** @type {Set<Parcel>} #carryingParcels *///-----------------------------------------------remove-----------------------------------
     #carryingParcels = new Set();
     // get carrying () {
     //     return Array.from(this.#carryingParcels);
@@ -57,7 +58,7 @@ class Agent extends Xy {
             
             super(--x, --y);
         }
-        
+        //--------------------------------------------------------remove----------------------------------------------------------------------
         Object.defineProperty (this, 'carrying', {
             get: () => Array.from(this.#carryingParcels).map( ({id, reward}) => { return {id, reward}; } ), // Recursion on carriedBy->agent->carrying->carriedBy ... 
             enumerable: false
@@ -76,12 +77,9 @@ class Agent extends Xy {
         this.id = options.id || 'a' + Agent.#lastId++;
         this.name = options.name || this.id;
         this.sensing = new Set();
-        this.score = 0;
+        this.score = 1;
 
         this.emitOnePerTick( 'xy', this ); // emit agent when spawning
-        
-        // Wrapping emitParcelSensing so to fire it just once every Node.js loop iteration
-        this.emitParcelSensing = new Postponer( this.emitParcelSensing.bind(this) ).atSetImmediate
 
     }
 
@@ -120,7 +118,7 @@ class Agent extends Xy {
 
     /**
      * Parcels sensend on the grid
-     */
+     *///---------------------------------------------------change-----------------------------------------------------------
     emitParcelSensing () {
 
         var parcels = [];
@@ -131,6 +129,31 @@ class Agent extends Xy {
             }
         }
         this.emit( 'parcels sensing', parcels )
+        
+        // this.emitOnePerTick( 'parcels sensing',
+        //     Array.from( this.#grid.getParcels() ).filter( p => Xy.distance(p, this) < 5 ).map( p => {
+        //         return {
+        //             id: p.id,
+        //             x: p.x,
+        //             y: p.y,
+        //             carriedBy: ( p.carriedBy ? p.carriedBy.id : null ),
+        //             reward: p.reward
+        //         };
+        //     } )
+        // );
+
+        // TO-DO How to emit an empty array when no parcels ?
+        // for ( let parcel of this.#grid.getParcels() ) {
+        //     if ( Xy.distance(parcel, this) < 5 ) {
+        //         this.emitAccumulatedAtNextTick( 'parcels sensing', {
+        //             id: parcel.id,
+        //             x: parcel.x,
+        //             y: parcel.y,
+        //             carriedBy: ( parcel.carriedBy ? parcel.carriedBy.id : null ),
+        //             reward: parcel.reward
+        //         } )
+        //     }
+        // }
 
     }
 
@@ -200,28 +223,36 @@ class Agent extends Xy {
     /**
      * @type {function(): void}
      */
-    pickUp () {
-        const picked = new Array();
-        var counter = 0;
+    interact () {//changed from pickup--------------------------------------change parcel to plant-----------------------------------
+        
         for ( const /**@type {Parcel} parcel*/ parcel of this.#grid.getParcels() ) {
-            if ( parcel.x == this.x && parcel.y == this.y && parcel.carriedBy == null ) {
-                this.#carryingParcels.add(parcel);
-                parcel.carriedBy = this;
-                // parcel.x = 0;
-                // parcel.y = 0;
-                picked.push( parcel );
-                counter++;
+            if ( parcel.x == this.x && parcel.y == this.y) {
+                let robType = Array.from(this.name)[0];
+                if (robType === 'W'||robType === 'w'){
+                    if (parcel.reward>0 && parcel.reward <= (MAX_WATER_LEVEL_PLANT-1)){
+                        parcel.reward = MAX_WATER_LEVEL_PLANT;//-----------------------------------this should also post a job on the bulletin board----------------------
+                    }
+                } else if (robType === 'S'||robType === 's'){
+                    if (parcel.reward<=0){
+                        parcel.reward = MAX_WATER_LEVEL_PLANT;//------------------------------this should also post  ajob on the bulletin board------------------------
+                        parcel.growthStage = 0;
+                    }
+                } else if (robType === 'H'||robType === 'h'){
+                    if (parcel.growthStage>=MAX_GROWTH_TIME_SECONDS && parcel.reward>0){
+                        parcel.growthStage = 0;
+                        parcel.reward = 0;
+                        this.score += 1;//-------------------------------score chould change when a job is completed
+                    }
+                }
             }
         }
-        // console.log(this.id, 'pickUp', counter, 'parcels')
-        if ( picked.length > 0 )
-            this.emit( 'pickup', this, picked );
-        return picked; // Array.from(this.#carryingParcels);
+        
     }
 
     /**
      * @type {function([id:String]): void}
      */
+    //-----------------------------------------------------------------remove or change to check -> post job--------------------------------------------------
     putDown ( ids = null ) {
         var tile = this.tile
         var sc = 0;

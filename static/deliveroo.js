@@ -152,9 +152,9 @@ class onGrid {
         this.#y = y
         this.#mesh.position.z = -y * 1.5
     }
-
+    //-------------------------------------------------------have to change a lot of stuff here--------------------------------------------------------------
     #carriedBy
-    pickup ( agent ) {
+    interact ( agent ) {//---------------------------------------------------------remove carried stuff------------------------------------------
         this.#carriedBy = agent;
         this.#carriedBy.#mesh.add( this.#mesh );
         this.#carriedBy.carrying.set(this.id, this);
@@ -163,7 +163,7 @@ class onGrid {
         this.y = 0
         this.#mesh.position.y = this.#carriedBy.carrying.size * 0.5;
     }
-    putdown ( x, y ) {
+    putdown ( x, y ) {//--------------------------------------------------remove----------------------------------------------------------
         this.#carriedBy.#mesh.remove( this.#mesh );
         this.#carriedBy.carrying.delete(this.id);
         this.opacity = 1;
@@ -173,7 +173,7 @@ class onGrid {
         this.#carriedBy = undefined;
         scene.add( this.#mesh );
     }
-    get carriedBy () {
+    get carriedBy () {//----------------------------------------------------remove-----------------------------------------
         return this.#carriedBy;
     }
 
@@ -232,9 +232,9 @@ class Tile extends onGrid {
 
     delivery = false;
     
-    constructor (x, y, delivery) {
+    constructor (x, y, delivery) {//-------------------------------------------------remove delivery-------------------------------------------------
         const geometry = new THREE.BoxGeometry( 1, 0.1, 1 );
-        const color = delivery ? 0xff0000 : 0x00ff00;
+        const color = delivery ? 0x333333 : 0x432616;//432616 --> walnut
         const material = new THREE.MeshBasicMaterial( { color, transparent: true, opacity: 1 } );
         const cube = new THREE.Mesh( geometry, material );
         scene.add( cube );
@@ -263,8 +263,8 @@ function setTile(x, y, delivery) {
 
 
 
-class Parcel extends onGrid {
-
+class Parcel extends onGrid {//---------------------------------------------------------------------parcel to plant----------------------------------------
+//---------------------------------------------------------------------change stuff here to show both reward(time left) and growth stage------------------------------------
     id
 
     #reward
@@ -279,7 +279,7 @@ class Parcel extends onGrid {
     constructor ( id, x, y, carriedBy, reward ) {
         const geometry = new THREE.BoxGeometry( 0.5, 0.5, 0.5 );
         var color = new THREE.Color( 0xffffff );
-        color.setHex( Math.random() * 0xffffff );
+        color.setHex( 0x88ff44 );
         const material = new THREE.MeshBasicMaterial( { color, transparent: true, opacity: 1 } );
         const parcel = new THREE.Mesh( geometry, material );
         scene.add( parcel );
@@ -288,9 +288,9 @@ class Parcel extends onGrid {
 
         this.id = id
         this.#reward = reward
-
+        //----------------------------------------------------------------------remove carried stuff-------------------------------------------------
         if (carriedBy) {
-            this.pickup( getOrCreateAgent( carriedBy ) )
+            this.interact( getOrCreateAgent( carriedBy ) )
         }
 
         // console.log('created parcel', id)
@@ -358,7 +358,7 @@ class Agent extends onGrid {
         this.text = this.name+'\n'+score;
     }
 
-    constructor (id, x, y, score) {
+    constructor (id, x, y, score) {//--------------------------------------idk how to get the name without breaking this whole thing----------------------------
         const geometry = new THREE.ConeGeometry( 0.5, 1, 32 );
         var color = new THREE.Color( 0xffffff );
         color.setHex( Math.random() * 0xffffff );
@@ -447,7 +447,7 @@ function getCookie(cname) {
 
 function checkCookieForToken ( name ) {
     let token = getCookie( 'token_'+name );
-    if ( token == "" || token == null ) {
+    if ( token == "" ) {
         token = prompt( `No token exists for user ${name}, please insert a valid token or leave empty to get a new one:`, "");
         if ( token != "" && token != null ) {
             setCookie( 'token_'+name, token, 365 );
@@ -488,17 +488,9 @@ socket.on( "connect", () => {
     console.log( "connect socket", socket.id, token ); // x8WIv7-mJelg7on_ALbx
 });
 
-socket.on( "disconnect", (reason) => {
-    if (reason === "io server disconnect") {
-        // the disconnection was initiated by the server, you need to reconnect manually
-        alert( `Token is invalid!` );
-        socket.connect();
-    }
-    console.error( `Socket.io connection error` );
-});
-
-socket.on("connect_error", (reason) => {
-    alert( `Reconnecting, press ok to continue.` );
+socket.on( "disconnect", () => {
+    socket.disconnect();
+    alert( `Disconnected! Connection problems or invalid token.` );
 });
 
 socket.on( "token", (token) => {
@@ -611,7 +603,7 @@ socket.on("parcels sensing", (sensed) => {
         if ( carriedBy ) {
             if ( !was.carriedBy ) {
                 var agent = getOrCreateAgent( carriedBy );
-                was.pickup( agent );
+                was.interact( agent );
             }
         }
         else {
@@ -634,9 +626,9 @@ document.onkeydown = function(evt) {
     // alert(charStr);
     switch (charCode) {
         case 81:// Q pickup
-        console.log('emit pickup');
-        socket.emit('pickup', (picked) => {
-            console.log( 'pickup', picked, 'parcels' );
+        console.log('emit interact');
+        socket.emit('interact', (picked) => {
+            console.log( 'interact', picked, 'parcels' );
             // for ( let p of picked ) {
             //     parcels.get( p.id ).pickup(me);
             // }

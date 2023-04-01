@@ -13,16 +13,20 @@ const PARCELS_GENERATION_INTERVAL = process.env.PARCELS_GENERATION_INTERVAL || c
  * @param {Grid} grid 
  */
 module.exports = function (grid) {
-    
-    myClock.on( PARCELS_GENERATION_INTERVAL, () => {
-        let parcel;
-        let trials = 0
-        while ( ! parcel && trials++ < 100 ) {
-            var x = Math.floor( Math.random() * (grid.getMapSize().width-2) ) + 1;
-            var y = Math.floor( Math.random() * (grid.getMapSize().height-2) ) + 1;
-            parcel = grid.createParcel(x, y);
+    var counter = 3;
+    myClock.on( PARCELS_GENERATION_INTERVAL, () => {//------when a plant spot is generated, this should post a job on the bulletin board--------
+        if (counter > 0){
+            counter--;
+            let parcel;
+            let trials = 0
+            while ( ! parcel && trials++ < 100 ) {
+                var x = Math.floor( Math.random() * (grid.getMapSize().width-2) ) + 1;
+                var y = Math.floor( Math.random() * (grid.getMapSize().height-2) ) + 1;
+                parcel = grid.createParcel(x, y);
+            }
+            // console.log('parcel created at', x, y, parcel.reward)
+
         }
-        // console.log('parcel created at', x, y, parcel.reward)
     } )
 
 }
