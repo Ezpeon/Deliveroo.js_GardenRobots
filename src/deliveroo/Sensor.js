@@ -112,8 +112,8 @@ class Sensor extends Xy {
             let {x, y} = tile;
             if ( tile.distance(this) < 5 ) {
                 for ( let parcel of tile.parcels ) {
-                    let {id, reward} = parcel;
-                    parcels.push( {id, x, y, reward} )
+                    let {id, reward, growthStage} = parcel;
+                    parcels.push( {id, x, y, reward, growthStage} )
                 }
             }
         }

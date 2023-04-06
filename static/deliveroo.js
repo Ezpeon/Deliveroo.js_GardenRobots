@@ -275,7 +275,6 @@ class Parcel extends onGrid {//-------------------------------------------------
         this.#reward = reward
         this.text = reward;
     }
-
     constructor ( id, x, y, carriedBy, reward ) {
         const geometry = new THREE.BoxGeometry( 0.5, 0.5, 0.5 );
         var color = new THREE.Color( 0xffffff );
