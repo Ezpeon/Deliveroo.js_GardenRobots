@@ -4,6 +4,7 @@ const Grid =  require('./Grid')
 const Tile =  require('./Tile');
 const Parcel =  require('./Parcel');
 const config =  require('../../config');
+const BulletinBoard = require('./BulletinBoard');
 
 
 
@@ -44,7 +45,7 @@ class Agent extends Xy {
      * @param {Grid} grid
      * @param {{id:number,name:string}} options
      */
-    constructor ( grid, options ) {
+    constructor ( grid, options) {
         
         {
             let x, y, found=false;
@@ -277,6 +278,16 @@ class Agent extends Xy {
             this.emitOnePerTick( 'putdown', this, dropped );
         this.score += sc;
         return dropped;
+    }
+
+
+    getJob (cat) {
+        console.log ('Agent entered getJob');
+        return this.#grid.giveJob(cat);
+    }
+
+    postJob (job, cat) {
+        this.#grid.receiveJob(job, cat);
     }
 }
 

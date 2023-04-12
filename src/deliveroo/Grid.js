@@ -3,6 +3,7 @@ const Tile =  require('./Tile')
 const Agent =  require('./Agent')
 const Parcel = require('./Parcel');
 const Xy = require('./Xy');
+const BulletinBoard = require('./BulletinBoard');
 
 
 
@@ -16,6 +17,9 @@ class Grid extends Observable {
     #agents;
     /** @type {Map<string, Parcel>} */
     #parcels;
+    
+    /** @type {BulletinBoard} #board */
+    #board;
     
     /**
      * @constructor Grid
@@ -43,6 +47,7 @@ class Grid extends Observable {
 
         this.#agents = new Map();
         this.#parcels = new Map();
+        this.#board = new BulletinBoard();
         
         for (let x = 0; x < map.length; x++) {
             const column = map[x];
@@ -201,6 +206,11 @@ class Grid extends Observable {
         
         // Instantiate and add to Tile
         var parcel = new Parcel( x, y );
+
+
+
+        this.receiveJob([x, y], 'G');
+
         // tile.addParcel( parcel );
         this.#parcels.set( parcel.id, parcel )
 
@@ -228,6 +238,17 @@ class Grid extends Observable {
      */
     deleteParcel ( id ) {
         return this.#parcels.delete( id );
+    }
+
+
+    giveJob(cat){
+        console.log('grid entered giveJob');
+        return this.#board.dequeue(cat);
+    }
+
+    receiveJob(job, cat){
+        this.#board.enqueue(job, cat);
+        
     }
 
 }

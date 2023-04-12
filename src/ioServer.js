@@ -1,7 +1,7 @@
 const { Server } = require('socket.io');
 const myGrid = require('./grid');
 const Authentication = require('./deliveroo/Authentication');
-
+const BulletinBoard = require('./deliveroo/BulletinBoard');
 
 
 const myAuthenticator = new Authentication( myGrid )
@@ -85,7 +85,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('interact', async (acknowledgementCallback) => {
-        const picked = me.interact()
+        //const picked = me.interact()
         if ( acknowledgementCallback )
             try {
                 acknowledgementCallback( me.interact() )
@@ -100,6 +100,25 @@ io.on('connection', (socket) => {
         } catch (error) { console.error(error) }
     });
 
+
+//************************************************************************job handling************************************************************************************
+    socket.on('offerJob', async (job, category, acknowledgementCallback) => {
+        try {
+            me.postJob(job, category);
+
+        } catch (error) { console.error(error) }
+    });
+    
+    socket.on('requestJob', async (category, acknowledgementCallback) => {
+        console.log('someone requested a job');
+        try {
+            console.log('ioServer entered try catch');
+            nextJob = me.getJob(category);
+            socket.emit( 'extractedJob', nextJob);
+            if (acknowledgementCallback)
+                acknowledgementCallback(nextJob)
+        } catch (error) { console.error(error) }
+    });
 
 
     /**
