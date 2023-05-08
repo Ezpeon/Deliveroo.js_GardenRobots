@@ -3,25 +3,26 @@ class Queue {
         this.elements = [];
         this.head = 0;
         this.tail = 0;
+        this.given=0;
 
     }
     enqueue(element) {
-        console.log ('enqueueing in the queue class: ' + element);
+        //console.log ('enqueueing in the queue class: ' + element);
         this.elements[this.tail] = element;
         this.tail++;
-        console.log ('queue is now ' + this.length() + ' elements long');
-        console.log ('the first element is :' + this.peek());
+        //console.log ('queue is now ' + this.length() + ' elements long');
+        //console.log ('the first element is :' + this.peek());
     }
     dequeue() {
-        console.log('entered dequeue in queue');
+        //console.log('entered dequeue in queue');
         let ok = this.length();
-        console.log('this queue is ' + ok + ' long');
+        //console.log('this queue is ' + ok + ' long');
         let item;
         if (ok > 0 ){
             
             item = this.peek();
-            //delete this.elements[this.head];
             this.head++;
+            this.given++;
 
         } else {
 
@@ -54,6 +55,8 @@ class Queue {
 **/
 class BulletinBoard {
     constructor() {
+
+        this.completed=0;
         this.boards = [];
         this.boards['G'] = new Queue();
         this.boards['S'] = new Queue();
@@ -65,10 +68,11 @@ class BulletinBoard {
         this.boards[category].enqueue(element)
     }
     dequeue(category) {
-        console.log('board entered dequeue for the queue: ' + category);
+        //console.log('board entered dequeue for the queue: ' + category);
         let item = this.boards[category].dequeue();
-        
-        console.log (item + " is being collected from queue " + category);
+        if (item != 'emptyQueueError'){
+            console.log (item + " is being collected from queue " + category);
+        }
         return item;
     }
     peek(category) {
@@ -79,6 +83,25 @@ class BulletinBoard {
     }
     isEmpty(category) {
         return this.boards[category].isEmpty();
+    }
+    
+    totLength() {
+        let ttt = 0;
+        ttt += this.boards['G'].length();
+        ttt += this.boards['W'].length();
+        ttt += this.boards['S'].length();
+        ttt += this.boards['H'].length();
+        return ttt;
+    }
+    deltaJobs(){
+        let d = 0;
+        d += this.boards['G'].given;
+        d += this.boards['W'].given;
+        d += this.boards['S'].given;
+        d += this.boards['H'].given;
+        d -= this.completed;
+        return d;
+
     }
 }
 

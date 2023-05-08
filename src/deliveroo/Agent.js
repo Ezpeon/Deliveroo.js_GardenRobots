@@ -11,8 +11,9 @@ const BulletinBoard = require('./BulletinBoard');
 const MOVEMENT_DURATION = process.env.MOVEMENT_DURATION || config.MOVEMENT_DURATION || 500;
 const AGENTS_OBSERVATION_DISTANCE = process.env.AGENTS_OBSERVATION_DISTANCE || config.AGENTS_OBSERVATION_DISTANCE || 5;
 const PARCELS_OBSERVATION_DISTANCE = process.env.PARCELS_OBSERVATION_DISTANCE || config.PARCELS_OBSERVATION_DISTANCE || 5;
-const MAX_GROWTH_TIME_SECONDS = config.MAX_GROWTH_TIME_SECONDS || 20;
+const MAX_GROWTH_TIME = config.MAX_GROWTH_TIME || 20;
 const MAX_WATER_LEVEL_PLANT = config.MAX_WATER_LEVEL_PLANT || 120;
+const WATER_STORAGE = 900;
 
 
 /**
@@ -32,13 +33,18 @@ class Agent extends Xy {
     name;
     /** @type {Set<Agent>} sensing agents in the sensed area */
     sensing;
-    /** @type {Number} score *///--------------------------------------------static?---------------------------------------------
+    /** @type {Number} score */
     score = 0;
     /** @type {Set<Parcel>} #carryingParcels *///-----------------------------------------------remove-----------------------------------
     #carryingParcels = new Set();
+
     // get carrying () {
     //     return Array.from(this.#carryingParcels);
     // }
+
+    //resourceLevel = 0; //--------------------score-----------------------------------
+    //fuel = 0;//----------------------------------------------------------------------------------------------------------------
+    collectedPotato = false;
 
     /**
      * @constructor Agent
@@ -177,6 +183,8 @@ class Agent extends Xy {
         }
         this.x = init_x + incr_x
         this.y = init_y + incr_y
+
+        
     }
 
     moving = false;
@@ -195,6 +203,8 @@ class Agent extends Xy {
             this.moving = false;
             fromTile.unlock();
             // this.emitParcelSensing(); // NO! this is done outside
+
+            this.#grid.totalFuel++;//-------------------------idk if here is the best place for this
             return true;
         }
         // console.log(this.id, 'fail move in', this.x+incr_x, this.y+incr_y)
@@ -224,29 +234,52 @@ class Agent extends Xy {
     /**
      * @type {function(): void}
      */
-    interact () {//changed from pickup--------------------------------------change parcel to plant-----------------------------------
+    interact () {
+
+        let robType = Array.from(this.name)[0];
+        if (this.tile.delivery == true){
+            if (robType === 'W'||robType === 'w'){
+                this.#grid.totalWater += WATER_STORAGE;
+                this.#grid.totalWater -= this.score;
+                this.#grid.totalRefills++;
+                this.score = WATER_STORAGE;
+            } else if (robType === 'H'||robType === 'h'){
+                if (this.collectedPotato == true){
+                    this.collectedPotato = false;
+                    this.score+=99;
+                    this.#grid.totalPotatoes++;
+                }
+            }
+
+        }
         
         for ( const /**@type {Parcel} parcel*/ parcel of this.#grid.getParcels() ) {
             if ( parcel.x == this.x && parcel.y == this.y) {
-                let robType = Array.from(this.name)[0];
                 if (robType === 'W'||robType === 'w'){
-                    if (parcel.reward>0 && parcel.reward <= (MAX_WATER_LEVEL_PLANT-1)){
-                        parcel.reward = MAX_WATER_LEVEL_PLANT;//-----------------------------------this should also post a job on the bulletin board----------------------
+                    if (parcel.reward>0 && parcel.reward <= (MAX_WATER_LEVEL_PLANT-1) && this.score >= parcel.reward && parcel.growthStage<MAX_GROWTH_TIME){
+                        this.score -= (MAX_WATER_LEVEL_PLANT-parcel.reward);
+                        parcel.reward = MAX_WATER_LEVEL_PLANT;
                     }
                 } else if (robType === 'S'||robType === 's'){
-                    if (parcel.reward<=0){
-                        parcel.reward = MAX_WATER_LEVEL_PLANT;//------------------------------this should also post  ajob on the bulletin board------------------------
+                    if (parcel.reward==0){
+                        parcel.reward = 30;
                         parcel.growthStage = 0;
+                        this.score += 1;
                     }
                 } else if (robType === 'H'||robType === 'h'){
-                    if (parcel.growthStage>=MAX_GROWTH_TIME_SECONDS && parcel.reward>0){
+                    if (parcel.reward == -1 && this.collectedPotato == false){
                         parcel.growthStage = 0;
                         parcel.reward = 0;
-                        this.score += 1;//-------------------------------score chould change when a job is completed
+                        this.collectedPotato = true;
+                        this.score+=1;
                     }
                 }
+                this.#grid.completeJob();
             }
         }
+
+
+
         
     }
 
@@ -282,12 +315,39 @@ class Agent extends Xy {
 
 
     getJob (cat) {
-        console.log ('Agent entered getJob');
+        //console.log ('Agent entered getJob');
         return this.#grid.giveJob(cat);
     }
 
-    postJob (job, cat) {
-        this.#grid.receiveJob(job, cat);
+    postJob () {
+
+        for ( const /**@type {Parcel} parcel*/ parcel of this.#grid.getParcels() ) {
+            if ( parcel.x == this.x && parcel.y == this.y) {
+                
+                let job = [parcel.x, parcel.y];
+
+
+                let cat = 't';
+
+                if (parcel.growthStage >= MAX_GROWTH_TIME ){
+                    cat = 'H';
+                } else if (parcel.reward <= 0){
+                    cat = 'S';
+                } else if (parcel.reward <= 60){
+                    cat = 'W';
+                }
+                if (cat!='t'){
+
+                    this.#grid.receiveJob(job, cat);
+
+                }
+            }
+        }
+
+
+
+
+
     }
 }
 

@@ -31,10 +31,29 @@ io.on('connection', (socket) => {
      */
     for (const tile of myGrid.getTiles()) {
         // console.log(tile)
-        if ( !tile.blocked ) 
-            socket.emit( 'tile', tile.x, tile.y, tile.delivery )
+        if ( !tile.blocked ) {
+
+            socket.emit( 'tile', tile.x, tile.y, tile.delivery );
+
+            //socket.emit( 'tile', {tx, ty, td} );
+
+        }
     }
     
+    for (const tile of myGrid.getTiles()) {
+        // console.log(tile)
+        let tx = tile.x;
+        let ty = tile.y;
+        let td = tile.delivery;
+        if ( !tile.blocked ) {
+
+            console.log ("emitting tile " + tx + " " + ty);
+            socket.emit( 'openTile', {tx, ty, td} );
+
+            //socket.emit( 'tile', {tx, ty, td} );
+
+        }
+    }
 
     
     /**
@@ -102,17 +121,17 @@ io.on('connection', (socket) => {
 
 
 //************************************************************************job handling************************************************************************************
-    socket.on('offerJob', async (job, category, acknowledgementCallback) => {
+    socket.on('offerJob', async (acknowledgementCallback) => {
         try {
-            me.postJob(job, category);
+            me.postJob();
 
         } catch (error) { console.error(error) }
     });
     
     socket.on('requestJob', async (category, acknowledgementCallback) => {
-        console.log('someone requested a job');
+        //console.log('someone requested a job');
         try {
-            console.log('ioServer entered try catch');
+            //console.log('ioServer entered try catch');
             nextJob = me.getJob(category);
             socket.emit( 'extractedJob', nextJob);
             if (acknowledgementCallback)

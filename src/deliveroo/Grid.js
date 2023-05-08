@@ -1,6 +1,7 @@
 const Observable =  require('./Observable')
 const Tile =  require('./Tile')
 const Agent =  require('./Agent')
+const myClock =  require('./Clock')
 const Parcel = require('./Parcel');
 const Xy = require('./Xy');
 const BulletinBoard = require('./BulletinBoard');
@@ -20,6 +21,11 @@ class Grid extends Observable {
     
     /** @type {BulletinBoard} #board */
     #board;
+
+    totalWater = 0;
+    totalRefills = 0;
+    totalFuel = 0;
+    totalPotatoes = 0;
     
     /**
      * @constructor Grid
@@ -31,7 +37,7 @@ class Grid extends Observable {
         var Ylength = map.length;
         this.#tiles = Array.from(map).map( (column, x) => {
             return Array.from(column).map( (value, y) => new Tile(
-                this, x, y, !value, ( x==0 || x==Xlength-1 || y==0 || y==Ylength-1 ? true : false )
+                this, x, y, !value, ( ((x==4 && y==8) || (x==5 && y==6)) ? true : false )
             ) )
         } );
         // console.log( this.#tiles.map( c=>c.map( t=>t.x+' '+t.y+' ' ) ) )
@@ -58,6 +64,23 @@ class Grid extends Observable {
             }
             
         }
+
+        const upBoard = () => {
+            console.log ('delta jobs is ' + this.#board.deltaJobs() + ' and length total is ' + this.#board.totLength());
+            console.log ('total water is ' + this.totalWater + ' from '+ this.totalRefills +' refills and total fuel is '+ this.totalFuel);
+            console.log ('the robots collected ' + this.totalPotatoes + ' potatoes in total');
+            if (this.#board.deltaJobs() == 0 && this.#board.totLength() == 0){
+                
+                for ( const parcel of this.getParcels() ) {
+                
+                    let {id, x, y, carriedBy, reward} = parcel;
+                    this.receiveJob ([x,y], 'G');
+                }
+            }
+            
+        };
+
+        myClock.on ('5s', upBoard );
 
     }
 
@@ -242,13 +265,16 @@ class Grid extends Observable {
 
 
     giveJob(cat){
-        console.log('grid entered giveJob');
+        //console.log('grid entered giveJob');
         return this.#board.dequeue(cat);
     }
 
     receiveJob(job, cat){
         this.#board.enqueue(job, cat);
         
+    }
+    completeJob(){
+        this.#board.completed++;
     }
 
 }
