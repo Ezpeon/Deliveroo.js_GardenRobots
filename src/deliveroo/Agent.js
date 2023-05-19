@@ -14,6 +14,7 @@ const PARCELS_OBSERVATION_DISTANCE = process.env.PARCELS_OBSERVATION_DISTANCE ||
 const MAX_GROWTH_TIME = config.MAX_GROWTH_TIME || 20;
 const MAX_WATER_LEVEL_PLANT = config.MAX_WATER_LEVEL_PLANT || 120;
 const WATER_STORAGE = 900;
+const WATER_LEVEL_LIMIT = 60;
 
 
 /**
@@ -256,13 +257,13 @@ class Agent extends Xy {
         for ( const /**@type {Parcel} parcel*/ parcel of this.#grid.getParcels() ) {
             if ( parcel.x == this.x && parcel.y == this.y) {
                 if (robType === 'W'||robType === 'w'){
-                    if (parcel.reward>0 && parcel.reward <= (MAX_WATER_LEVEL_PLANT-1) && this.score >= parcel.reward && parcel.growthStage<MAX_GROWTH_TIME){
+                    if (parcel.reward>0 && parcel.reward <= (WATER_LEVEL_LIMIT) && this.score >= parcel.reward && parcel.growthStage<MAX_GROWTH_TIME){
                         this.score -= (MAX_WATER_LEVEL_PLANT-parcel.reward);
                         parcel.reward = MAX_WATER_LEVEL_PLANT;
                     }
                 } else if (robType === 'S'||robType === 's'){
                     if (parcel.reward==0){
-                        parcel.reward = 30;
+                        parcel.reward = WATER_LEVEL_LIMIT;
                         parcel.growthStage = 0;
                         this.score += 1;
                     }
@@ -333,7 +334,7 @@ class Agent extends Xy {
                     cat = 'H';
                 } else if (parcel.reward <= 0){
                     cat = 'S';
-                } else if (parcel.reward <= 60){
+                } else if (parcel.reward <= WATER_LEVEL_LIMIT){
                     cat = 'W';
                 }
                 if (cat!='t'){

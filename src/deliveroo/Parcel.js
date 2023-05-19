@@ -5,12 +5,12 @@ const config =  require('../../config')
 
 
 
-const PARCEL_REWARD_AVG = process.env.PARCEL_REWARD_AVG || config.PARCEL_REWARD_AVG || 30;
+const PARCEL_REWARD_AVG = process.env.PARCEL_REWARD_AVG || config.PARCEL_REWARD_AVG || 40;
 const PARCEL_REWARD_VARIANCE = process.env.PARCEL_REWARD_VARIANCE || config.PARCEL_REWARD_VARIANCE || 10;
 const PARCEL_DECADING_INTERVAL = process.env.PARCEL_DECADING_INTERVAL || config.PARCEL_DECADING_INTERVAL || 'infinite';
 const MAX_GROWTH_TIME = config.MAX_GROWTH_TIME || 200;
 const MAX_WATER_LEVEL_PLANT = config.MAX_WATER_LEVEL_PLANT || 120;
-const PLANT_DECAY_RATE = 4;
+const PLANT_DECAY_RATE = 3;
 
 //---------------------------------------------------------------change name-----------------------------------------------------------
 
@@ -74,13 +74,13 @@ class Parcel extends Xy {
                 }
                 let growthThisSecond = Math.floor(rngt5f*3.0*waterRelative);
                 this.growthStage += growthThisSecond;
-                console.log ("plant is growing: growth increased by " + growthThisSecond + " to " + this.growthStage);
+                //console.log ("plant is growing: growth increased by " + growthThisSecond + " to " + this.growthStage);
             } else if (this.growthStage > MAX_GROWTH_TIME){
                 this.reward = -1;
-                console.log ("this plant is grown: " + this.growthStage);
+                //console.log ("this plant is grown: " + this.growthStage);
             } else if (this.reward <= 0){
                 this.growthStage = 0;
-                console.log ("this plant is dead: " + this.growthStage + " " + this.reward);
+                //console.log ("this plant is dead: " + this.growthStage + " " + this.reward);
             }
         };
         myClock.on( PARCEL_DECADING_INTERVAL, decay );
