@@ -64,14 +64,14 @@ class BulletinBoard {
         this.boards['H'] = new Queue();
     }
     enqueue(element, category) {//at each function add category like this
-        console.log (element + " is being added to queue " + category);
+        //console.log (element + " is being added to queue " + category);
         this.boards[category].enqueue(element)
     }
     dequeue(category) {
         //console.log('board entered dequeue for the queue: ' + category);
         let item = this.boards[category].dequeue();
         if (item != 'emptyQueueError'){
-            console.log (item + " is being collected from queue " + category);
+            //console.log (item + " is being collected from queue " + category);
         }
         return item;
     }

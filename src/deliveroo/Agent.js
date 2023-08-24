@@ -7,14 +7,14 @@ const config =  require('../../config');
 const BulletinBoard = require('./BulletinBoard');
 
 
-
+const numberofbots = 4;
 const MOVEMENT_DURATION = process.env.MOVEMENT_DURATION || config.MOVEMENT_DURATION || 500;
 const AGENTS_OBSERVATION_DISTANCE = process.env.AGENTS_OBSERVATION_DISTANCE || config.AGENTS_OBSERVATION_DISTANCE || 5;
 const PARCELS_OBSERVATION_DISTANCE = process.env.PARCELS_OBSERVATION_DISTANCE || config.PARCELS_OBSERVATION_DISTANCE || 5;
-const MAX_GROWTH_TIME = config.MAX_GROWTH_TIME || 20;
-const MAX_WATER_LEVEL_PLANT = config.MAX_WATER_LEVEL_PLANT || 120;
-const WATER_STORAGE = 900;
-const WATER_LEVEL_LIMIT = 60;
+const MAX_GROWTH_TIME = config.MAX_GROWTH_TIME || 4500;
+const MAX_WATER_LEVEL_PLANT = config.MAX_WATER_LEVEL_PLANT || 300;
+const WATER_STORAGE = 840 * numberofbots;
+const WATER_LEVEL_LIMIT = config.PARCEL_REWARD_AVG || 240;
 
 
 /**
@@ -165,7 +165,10 @@ class Agent extends Xy {
 
     }
 
-
+    dayAfter(){
+        //console.log (this.name + ": what a wonderful new day!");
+        this.emit('dayPassed', 'dayday');
+    }
 
     get tile() {
         return this.#grid.getTile( Math.round(this.x), Math.round(this.y) );
@@ -204,8 +207,11 @@ class Agent extends Xy {
             this.moving = false;
             fromTile.unlock();
             // this.emitParcelSensing(); // NO! this is done outside
-
-            this.#grid.totalFuel++;//-------------------------idk if here is the best place for this
+            if (this.name.localeCompare("Watame") == 0){
+                this.#grid.totalFuel+= Math.floor(WATER_STORAGE/960);
+            }else {
+                this.#grid.totalFuel++;//-------------------------idk if here is the best place for this
+            }
             return true;
         }
         // console.log(this.id, 'fail move in', this.x+incr_x, this.y+incr_y)
@@ -244,10 +250,15 @@ class Agent extends Xy {
                 this.#grid.totalWater -= this.score;
                 this.#grid.totalRefills++;
                 this.score = WATER_STORAGE;
+                //console.log (this.name + "refilled water");
+                if (this.name.localeCompare("Watame") == 0){
+                    this.#grid.updateDay();
+                    console.log ("W is ready for tomorrow");
+                }
             } else if (robType === 'H'||robType === 'h'){
                 if (this.collectedPotato == true){
                     this.collectedPotato = false;
-                    this.score+=99;
+                    this.score+=9;
                     this.#grid.totalPotatoes++;
                 }
             }
@@ -257,9 +268,12 @@ class Agent extends Xy {
         for ( const /**@type {Parcel} parcel*/ parcel of this.#grid.getParcels() ) {
             if ( parcel.x == this.x && parcel.y == this.y) {
                 if (robType === 'W'||robType === 'w'){
-                    if (parcel.reward>0 && parcel.reward <= (WATER_LEVEL_LIMIT) && this.score >= parcel.reward && parcel.growthStage<MAX_GROWTH_TIME){
+                    if (parcel.reward>0 && parcel.reward <= (MAX_WATER_LEVEL_PLANT) && this.score >= (MAX_WATER_LEVEL_PLANT-parcel.reward) && parcel.growthStage<MAX_GROWTH_TIME){
                         this.score -= (MAX_WATER_LEVEL_PLANT-parcel.reward);
                         parcel.reward = MAX_WATER_LEVEL_PLANT;
+                    } else if (parcel.reward>0 && parcel.reward <= (MAX_WATER_LEVEL_PLANT) && this.score > 0 && parcel.growthStage<MAX_GROWTH_TIME){
+                        parcel.reward += this.score;
+                        this.score = 0;
                     }
                 } else if (robType === 'S'||robType === 's'){
                     if (parcel.reward==0){
@@ -275,7 +289,9 @@ class Agent extends Xy {
                         this.score+=1;
                     }
                 }
-                this.#grid.completeJob();
+                if (robType === 'H'||robType === 'h'||robType === 'S'||robType === 's'){
+                    this.#grid.completeJob();
+                }
             }
         }
 
@@ -321,6 +337,7 @@ class Agent extends Xy {
     }
 
     postJob () {
+        let robType = Array.from(this.name)[0];
 
         for ( const /**@type {Parcel} parcel*/ parcel of this.#grid.getParcels() ) {
             if ( parcel.x == this.x && parcel.y == this.y) {
@@ -330,11 +347,11 @@ class Agent extends Xy {
 
                 let cat = 't';
 
-                if (parcel.growthStage >= MAX_GROWTH_TIME ){
+                if (parcel.growthStage >= MAX_GROWTH_TIME && parcel.reward == -1 && !(robType === 'H'||robType === 'h')){
                     cat = 'H';
-                } else if (parcel.reward <= 0){
+                } else if (parcel.reward <= 0  && !(robType === 'S'||robType === 's')){
                     cat = 'S';
-                } else if (parcel.reward <= WATER_LEVEL_LIMIT){
+                } else if (parcel.reward < WATER_LEVEL_LIMIT  && !(robType === 'W'||robType === 'w')){
                     cat = 'W';
                 }
                 if (cat!='t'){

@@ -29,7 +29,9 @@ class Clock extends Observable {
                 if ( this.#s % 2 == 0 ) this.emit( '2s' );
                 if ( this.#s % 5 == 0 ) this.emit( '5s' );
                 if ( this.#s % 10 == 0 ) this.emit( '10s' );
+                if ( this.#s % 20 == 0 ) this.emit( '20s' );
                 if ( this.#s % 60 == 0 ) this.emit( '1m' );
+                if ( this.#s % (60*60) == 0 ) this.emit( '1h' );
             }
         }
         else {

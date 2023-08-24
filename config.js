@@ -1,6 +1,6 @@
 const config = {
 
-    MAP_FILE: 'default_map',    // options are 'default_map' (DEFAULT), 'empty_map', 'map_20', ...files in levels/maps
+    MAP_FILE: 'map_12',    // options are 'default_map' (DEFAULT), 'empty_map', 'map_20', ...files in levels/maps
 
     PARCELS_GENERATION_INTERVAL: '2s',  // options are '1s', '2s' (DEFAULT), '5s', '10s'
 
@@ -8,15 +8,15 @@ const config = {
     AGENTS_OBSERVATION_DISTANCE: 50,     // default is 5
     PARCELS_OBSERVATION_DISTANCE: 50,    // default is 5
 
-    PARCEL_REWARD_AVG: 90,          // default is 30
+    PARCEL_REWARD_AVG: 240,          // default is 30
     PARCEL_REWARD_VARIANCE: 10,     // default is 10
     PARCEL_DECADING_INTERVAL: '1s', // options are '1s', '2s', '5s', '10s', 'infinite' (DEFAULT)
 
     RANDOMLY_MOVING_AGENTS: 0,  // default is 2
     RANDOM_AGENT_SPEED: '2s',    // options are '1s', '2s' (DEFAULT), '5s', '10s'
 
-    MAX_GROWTH_TIME: 500, //200 default, could be less for quicker tests
-    MAX_WATER_LEVEL_PLANT: 120   //120 (seconds) default
+    MAX_GROWTH_TIME: 4500, //200 default, could be less for quicker tests
+    MAX_WATER_LEVEL_PLANT: 300   //120 (seconds) default
 /*
 *constants have to be chaged to make more sense of the simulation
 *e.g. irl a plant dying from dehydration is not a matter of seconds, so there should be a big margin inbetween the times

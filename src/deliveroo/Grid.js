@@ -7,6 +7,9 @@ const Xy = require('./Xy');
 const BulletinBoard = require('./BulletinBoard');
 
 
+const fs = require('fs');
+
+
 
 /**
  * @class Grid
@@ -26,18 +29,21 @@ class Grid extends Observable {
     totalRefills = 0;
     totalFuel = 0;
     totalPotatoes = 0;
+    hourcounter = 0;
+    day = 0;
+    dayCycleUpdateFlag = false;
     
     /**
      * @constructor Grid
      */
-    constructor ( map = new Array(10).map( c=>new Array(10) ) ) {
+    constructor ( map = new Array(20).map( c=>new Array(20) ) ) {
         super();
         
         var Xlength = map.length;
         var Ylength = map.length;
         this.#tiles = Array.from(map).map( (column, x) => {
             return Array.from(column).map( (value, y) => new Tile(
-                this, x, y, !value, ( ((x==4 && y==8) || (x==5 && y==6)) ? true : false )
+                this, x, y, !value, ( ((x==0 && y==11) ||(x==0 && y==10) ||(x==1 && y==11) ||(x==6 && y==5)) ? true : false )
             ) )
         } );
         // console.log( this.#tiles.map( c=>c.map( t=>t.x+' '+t.y+' ' ) ) )
@@ -65,22 +71,53 @@ class Grid extends Observable {
             
         }
 
-        const upBoard = () => {
+
+        const doDayLightCycle = () => {
+            
+            console.log('today is the day: ' + this.getDay());
+            console.log('are we updating: ' + this.dayCycleUpdateFlag);
+            
+            if (this.dayCycleUpdateFlag == true){
+                this.dayCycleUpdateFlag = false;
+                this.tomorrow();
+            }
+        };
+
+
+        const upBoard = () => { //--update board function--
             console.log ('delta jobs is ' + this.#board.deltaJobs() + ' and length total is ' + this.#board.totLength());
-            console.log ('total water is ' + this.totalWater + ' from '+ this.totalRefills +' refills and total fuel is '+ this.totalFuel);
-            console.log ('the robots collected ' + this.totalPotatoes + ' potatoes in total');
+            //console.log ('total water is ' + this.totalWater + ' from '+ this.totalRefills +' refills and total fuel is '+ this.totalFuel);
+            //console.log ('the robots collected ' + this.totalPotatoes + ' fruits in total');
             if (this.#board.deltaJobs() == 0 && this.#board.totLength() == 0){
-                
+
+                doDayLightCycle();           
+
+                /*
                 for ( const parcel of this.getParcels() ) {
                 
-                    let {id, x, y, carriedBy, reward} = parcel;
-                    this.receiveJob ([x,y], 'G');
-                }
-            }
+                    //let {id, x, y, carriedBy, reward} = parcel;
+                    //this.receiveJob ([x,y], 'W');
+                }*/
+            } 
+        };
+        const saveData = () => {
+            this.hourcounter ++;
+            let outstr = ('today is the day: ' + this.getDay()) + '\n' + ('total water is ' + this.totalWater + ' from '+ this.totalRefills +' refills and total fuel is '+ this.totalFuel) + '\n' + ('the robots collected ' + this.totalPotatoes + ' fruits in total');
+            let allok = new Promise( (res, rej) => {
+                fs.writeFile(this.hourcounter + 'h_out.txt', outstr, err => {
+                    if (err)
+                        rej(err)
+                    else // console.log("File written successfully");
+                        res(this.hourcounter + 'h_out.txt')
+                })
+            })
+
             
         };
 
-        myClock.on ('5s', upBoard );
+        myClock.on ('10s', upBoard );
+        myClock.on ('1h', saveData );
+        
 
     }
 
@@ -228,11 +265,11 @@ class Grid extends Observable {
             return false;
         
         // Instantiate and add to Tile
-        var parcel = new Parcel( x, y );
+        var parcel = new Parcel( x, y, null, this);
 
 
 
-        this.receiveJob([x, y], 'G');
+        //this.receiveJob([x, y], 'W');
 
         // tile.addParcel( parcel );
         this.#parcels.set( parcel.id, parcel )
@@ -275,6 +312,37 @@ class Grid extends Observable {
     }
     completeJob(){
         this.#board.completed++;
+    }
+    getDay(){
+        return this.day;
+    }
+    updateDay(){
+        this.dayCycleUpdateFlag = true;
+    }
+    tomorrow(){
+
+        if (this.day%50==0){
+            let outstr = ('today is the day: ' + this.getDay()) + '\n' + ('total water is ' + this.totalWater + ' from '+ this.totalRefills +' refills and total fuel is '+ this.totalFuel) + '\n' + ('the robots collected ' + this.totalPotatoes + ' fruits in total');
+            let allok = new Promise( (res, rej) => {
+                fs.writeFile('day' + this.day + '_out.txt', outstr, err => {
+                    if (err)
+                        rej(err)
+                    else // console.log("File written successfully");
+                        res('day' + this.day + '_out.txt')
+                })
+            })
+        }
+
+
+        this.day++;
+        
+        for (var [key, value] of this.#agents){
+            this.comunicateDayPassing(this.getAgent(key));
+        }
+    }
+    comunicateDayPassing(AG){
+        //console.log ("i am telling " + AG.name + " that a day has passed");
+        AG.dayAfter();
     }
 
 }

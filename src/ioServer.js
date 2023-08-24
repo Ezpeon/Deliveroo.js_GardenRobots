@@ -47,7 +47,7 @@ io.on('connection', (socket) => {
         let td = tile.delivery;
         if ( !tile.blocked ) {
 
-            console.log ("emitting tile " + tx + " " + ty);
+            //console.log ("emitting tile " + tx + " " + ty);
             socket.emit( 'openTile', {tx, ty, td} );
 
             //socket.emit( 'tile', {tx, ty, td} );
@@ -87,6 +87,10 @@ io.on('connection', (socket) => {
         socket.emit( 'agents sensing', agents );
     } );
     me.emitAgentSensing();
+
+    me.on ('dayPassed', d =>{
+        socket.emit( 'the dawn of a new day', d);
+    });
     
 
 
